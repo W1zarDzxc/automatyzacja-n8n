@@ -1,0 +1,222 @@
+{
+  "name": "Oferta_po_zapytaniu",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -160
+      ],
+      "id": "77332af0-7228-4b14-971a-bf0e2d0eec82",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7MsiN1TVE1T87OhJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// build a simple HTML offer from the OpenAI JSON\nconst ai = items[0].json;\nlet content = ai.offer_text || 'No offer generated.';\nconst title = (ai.pdf_title) ? ai.pdf_title : 'Oferta';\n\nconst html = `<!doctype html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <title>${title}</title>\n  <style>body{font-family: Arial, Helvetica, sans-serif; padding:24px; color:#222} h1{font-size:22px} h2{font-size:16px} .meta{color:#666; font-size:12px}</style>\n</head>\n<body>\n  <h1>${title}</h1>\n  <p class=\"meta\">Prepared for: <strong>${items[0].json.from || 'Client'}</strong></p>\n  <hr/>\n  <div>${content.replace(/\\n/g, '<br/>')}</div>\n  <hr/>\n  <p class=\"meta\">This is an automatically generated offer. Edit company name and prices before sending.</p>\n</body>\n</html>`;\n\nreturn [{ json: { html } }];"
+      },
+      "name": "Build HTML",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -160
+      ],
+      "id": "a4d47771-27ba-456e-b61a-e6f1c1882a93"
+    },
+    {
+      "parameters": {
+        "subject": "Re: {{$json[\"subject\"]}} — Oferta (załącznik)",
+        "message": "Dzień dobry chce zaproponować oferte",
+        "additionalFields": {}
+      },
+      "name": "Send Offer (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        -160
+      ],
+      "id": "3bb7dcb6-ee36-4c56-ac87-ddfd003059d7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7MsiN1TVE1T87OhJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "days"
+      },
+      "name": "Wait 3 days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        -160
+      ],
+      "id": "c36257e1-4884-4842-9eac-b60b94bbdffc",
+      "webhookId": "2d75fb40-f1f9-44d0-8592-ab5b83ed08aa"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "subject": "Dzień dobry",
+        "message": "Czy pan obejrzał już oferte?",
+        "additionalFields": {}
+      },
+      "name": "Check for Reply (Gmail Search)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        -160
+      ],
+      "id": "764d7f11-2e24-43f7-b633-32a4f4fc0917",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7MsiN1TVE1T87OhJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $node['Check for Reply (Gmail Search)'].json['messages'] ? $node['Check for Reply (Gmail Search)'].json['messages'].length : 0 }}",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "name": "If No Reply",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        -160
+      ],
+      "id": "a68aa8ca-772f-48c4-b628-92a84069569e"
+    },
+    {
+      "parameters": {
+        "subject": "Przypomnienie: Nasza oferta dotycząca {{$json[\"subject\"]}}",
+        "message": "Dzieńkuję za obejrzenie",
+        "additionalFields": {}
+      },
+      "name": "Follow-up (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        -160
+      ],
+      "id": "1bf28fe6-1129-46a5-80aa-9c395b90a491",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7MsiN1TVE1T87OhJ",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send Offer (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 days": {
+      "main": [
+        [
+          {
+            "node": "Check for Reply (Gmail Search)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Reply (Gmail Search)": {
+      "main": [
+        [
+          {
+            "node": "If No Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If No Reply": {
+      "main": [
+        [
+          {
+            "node": "Follow-up (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Offer (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fe8f1c6b-19a0-45b5-a7bc-7c9da65d7022",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6bcf516e87483f0a3d76cee26a6cc8572aed059f9e26a299a0ba169efa98c5bf"
+  },
+  "id": "FRH4BNTRbEYPrFCB",
+  "tags": []
+}

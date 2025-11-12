@@ -1,0 +1,3 @@
+Początkowo ta automatyzacja miała, po otrzymaniu wiadomości na Gmailu, zbierać dane i wysyłać ofertę w formacie PDF utworzoną przez AI, a następnie po trzech dniach wysyłać kolejną wiadomość.
+Jednak nie udało mi się połączyć i skonfigurować AI ani automatycznie tworzyć pliku PDF z ofertą, dlatego mój program po prostu wysyła wiadomości w określonych odstępach czasu.
+Zapoznałem się z n8n, obejrzałem wiele poradników, ale nie zrozumiałem, jak naprawić swój błąd.
